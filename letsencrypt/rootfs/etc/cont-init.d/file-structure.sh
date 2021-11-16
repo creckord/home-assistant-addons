@@ -51,3 +51,21 @@ if bashio::config.exists 'dns.transip_api_key'; then
       echo "${TRANSIP_API_KEY}" | openssl rsa -out /data/transip-rsa.key
       chmod 600 /data/transip-rsa.key
 fi
+
+rm -f /data/dns_hook_auth /data/dns_hook_cleanup
+if bashio::config.exists 'dns.hook_script_auth'; then
+	HOOK_SCRIPT_AUTH=$(bashio::config 'dns.hook_script_auth')
+	if [ -n "$HOOK_SCRIPT_AUTH" ]; then
+		echo "$HOOK_SCRIPT_AUTH" > /data/dns_hook_auth
+		chmod 700 /data/dns_hook_auth
+	fi
+fi
+if bashio::config.exists 'dns.hook_script_cleanup'; then
+	HOOK_SCRIPT_CLEANUP=$(bashio::config 'dns.hook_script_cleanup')
+	if [ "*" == "$HOOK_SCRIPT_CLEANUP" ]; then
+		ln -s /data/dns_hook_auth /data/dns_hook_cleanup
+	elif [ -n "$HOOK_SCRIPT_CLEANUP" ]; then
+		echo "$HOOK_SCRIPT_CLEANUP" > /data/dns_hook_cleanup
+		chmod 700 /data/dns_hook_cleanup
+	fi
+fi

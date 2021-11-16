@@ -439,34 +439,40 @@ Some DNS providers, such as [deSEC](https://github.com/desec-utils/certbot-hook)
 [acme-dns](https://github.com/joohoi/acme-dns-certbot-joohoi), have published official Certbot hook scripts.
 For other providers, you may be able to find a community hook script, or you can write one yourself.
 
-To use hook scripts, you will need to upload them to the `/share` or `/ssl` directory. You can use
-the Samba or SSH add-ons to do this. You may need to modify the hook scripts, or include other files along
-with the scripts, to properly set your API key or other credentials. Follow the instructions that came
-with your hook script if you're not sure.
+Hook scripts are defined inline using the `hook_script_auth` and `hook_script_cleanup` options.
+In case you want to use an external script, e.g. because your provider's hook script is quite large, you can
+upload them to the `/share` or `/ssl` directory and use `hook_script_auth`/`hook_script_cleanup` as a wrapper
+to call them. This way, you can also include other files along with the scripts, to properly set your API key 
+or other credentials. Follow the instructions that came with your hook script if you're not sure.
 
-Once your hook scripts are configured and uploaded, configure the addon as follows:
+An example configuration:
 
 ```yaml
 email: your.email@example.com
 domains:
-  - home-assistant.io
+  - example.com
 certfile: fullchain.pem
 keyfile: privkey.pem
 challenge: dns
 dns:
   provider: dns-hook-script
-  hook_script_auth: /share/path/to/your/auth-hook.sh
-  hook_script_cleanup: /share/path/to/your/cleanup-hook.sh
+  hook_script_auth: |-
+    #!/bin/bash
+	/share/path/to/your/auth-hook.sh "$@"
+  hook_script_cleanup: |-
+    #!/bin/bash
+	/share/path/to/your/cleanup-hook.sh "$@"
 ```
 
 Some hook scripts use the same script for both the auth and cleanup hooks. If this is the case for your
-hook script, put the same path in both `hook_script_auth` and `hook_script_cleanup`:
+hook script, use the special value `*` for the `hook_script_cleanup`. This will make it reuse the auth script:
 
 ```yaml
 dns:
-  provider: dns-hook-script
-  hook_script_auth: /share/path/to/your/hook.sh
-  hook_script_cleanup: /share/path/to/your/hook.sh
+  hook_script_auth: |-
+    #!/bin/bash
+	/share/path/to/your/auth-hook.sh "$@"
+  hook_script_cleanup: "*"
 ```
 
 ## Certificate files
