@@ -8,18 +8,23 @@ ARG CERTBOT_NETCUP_VERSION
 ARG CERTBOT_NJALLA_VERSION
 ARG CERTBOT_GANDI_VERSION
 ARG CERTBOT_DNS_TRANSIP_VERSION
+ARG CERTBOT_LXML_VERSION
+ARG BUILD_ARCH
 
 RUN apk add --no-cache --update \
         libffi \
         musl \
         openssl \
         curl \
+		libxml2 \
+		libxslt \
     && apk add --no-cache --virtual .build-dependencies \
         g++ \
         libffi-dev \
         musl-dev \
         openssl-dev \
-    && /usr/local/bin/python3 -m pip install --upgrade pip \
+		make \
+		coreutils \
     && pip3 install --no-cache-dir --find-links \
         "https://wheels.home-assistant.io/alpine-$(cut -d '.' -f 1-2 < /etc/alpine-release)/${BUILD_ARCH}/" \
         certbot==${CERTBOT_VERSION} \
@@ -43,6 +48,8 @@ RUN apk add --no-cache --update \
         certbot-dns-netcup==${CERTBOT_NETCUP_VERSION} \
         certbot-plugin-gandi==${CERTBOT_GANDI_VERSION} \
         certbot-dns-transip==${CERTBOT_DNS_TRANSIP_VERSION} \
+        lxml==${CERTBOT_LXML_VERSION} \
+		kasserver \
     && apk del .build-dependencies
 
 # Copy data
