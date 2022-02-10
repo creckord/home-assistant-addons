@@ -23,6 +23,7 @@ RUN \
 		libxml2 \
 		libxslt \
     && apk add --no-cache --virtual .build-dependencies \
+        g++ \
         build-base \
         libffi-dev \
         musl-dev \
