@@ -3,6 +3,9 @@
 ## 4.12.0
 
 - Add support for custom Certbot auth and cleanup hooks
+- Update Certbot 1.21.0 & Plugins
+- Update to Python 3.9
+- Update to Alpine 3.14
 
 ## 4.11.0
 

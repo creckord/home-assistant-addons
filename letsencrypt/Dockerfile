@@ -2,16 +2,19 @@ ARG BUILD_FROM
 FROM $BUILD_FROM
 
 # setup base
-ARG CERTBOT_VERSION
-ARG CERTBOT_DNS_DIRECTADMIN_VERSION
-ARG CERTBOT_NETCUP_VERSION
-ARG CERTBOT_NJALLA_VERSION
-ARG CERTBOT_GANDI_VERSION
-ARG CERTBOT_DNS_TRANSIP_VERSION
-ARG CERTBOT_LXML_VERSION
-ARG BUILD_ARCH
+ARG \
+    CERTBOT_VERSION \
+    CERTBOT_DNS_DIRECTADMIN_VERSION \
+    CERTBOT_NETCUP_VERSION \
+    CERTBOT_NJALLA_VERSION \
+    CERTBOT_GANDI_VERSION \
+    CERTBOT_DNS_TRANSIP_VERSION \
+    CERTBOT_LXML_VERSION \
+    BUILD_ARCH
 
-RUN apk add --no-cache --update \
+RUN \
+    set -x \
+    && apk add --no-cache --update \
         libffi \
         musl \
         openssl \
@@ -19,10 +22,11 @@ RUN apk add --no-cache --update \
 		libxml2 \
 		libxslt \
     && apk add --no-cache --virtual .build-dependencies \
-        g++ \
+        build-base \
         libffi-dev \
         musl-dev \
         openssl-dev \
+        cargo \
 		make \
 		coreutils \
     && pip3 install --no-cache-dir --find-links \
