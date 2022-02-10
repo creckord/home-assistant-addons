@@ -6,6 +6,8 @@
 - Update Certbot 1.21.0 & Plugins
 - Update to Python 3.9
 - Update to Alpine 3.14
+- Upgrade pip to 21.3.1
+- Add missing ARG for BUILD_ARCH
 
 ## 4.11.0
 

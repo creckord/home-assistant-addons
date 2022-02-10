@@ -10,7 +10,8 @@ ARG \
     CERTBOT_GANDI_VERSION \
     CERTBOT_DNS_TRANSIP_VERSION \
     CERTBOT_LXML_VERSION \
-    BUILD_ARCH
+    BUILD_ARCH \
+    PIP_VERSION
 
 RUN \
     set -x \
@@ -29,6 +30,7 @@ RUN \
         cargo \
 		make \
 		coreutils \
+    && pip3 install --no-cache-dir pip==${PIP_VERSION} \
     && pip3 install --no-cache-dir --find-links \
         "https://wheels.home-assistant.io/alpine-$(cut -d '.' -f 1-2 < /etc/alpine-release)/${BUILD_ARCH}/" \
         certbot==${CERTBOT_VERSION} \
