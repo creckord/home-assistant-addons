@@ -46,6 +46,7 @@ In addition add the fields according to the credentials required by your DNS pro
 
 ```yaml
 propagation_seconds: 60
+azure_config: ''
 cloudflare_email: ''
 cloudflare_api_key: ''
 cloudflare_api_token: ''
@@ -59,6 +60,7 @@ dnsimple_token: ''
 dnsmadeeasy_api_key: ''
 dnsmadeeasy_secret_key: ''
 google_creds: ''
+hetzner_api_token: ''
 gehirn_api_token: ''
 gehirn_api_secret: ''
 hook_script_auth: ''
@@ -89,6 +91,9 @@ gandi_api_key: ''
 gandi_sharing_id: ''
 transip_username: ''
 transip_api_key: ''
+inwx_username: ''
+inwx_password: ''
+inwx_shared_secret: ''
 ```
 
 ## Advanced
@@ -146,6 +151,38 @@ transip_api_key: ''
     cloudflare_email: your.email@example.com
     cloudflare_api_key: 31242lk3j4ljlfdwsjf0
   ```
+
+</details>
+
+
+<details>
+  <summary>Azure DNS challenge</summary>
+
+```yaml
+email: your.email@example.com
+domains:
+  - home-assistant.io
+certfile: fullchain.pem
+keyfile: privkey.pem
+challenge: dns
+dns:
+  provider: dns-azure
+  azure_config: azure.txt
+```
+
+Please copy your credentials file "azure.txt" into the "share" shared folder
+on the Home Assistant host before starting the service. One way is to use the
+"Samba" add on to make the folder available via network or SSH Add-on. You
+can find information on the required file format in the [documentation][certbot-dns-azure-conf]
+for the Certbot Azure plugin.
+
+To use this plugin, [create an Azure Active Directory app registration][aad-appreg]
+and service principal; add a client secret; and create a credentials file
+using the above directions. Grant the app registration DNS Zone Contributor
+on the DNS zone to be used for authentication.
+
+[aad-appreg]: https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#register-an-application-with-azure-ad-and-create-a-service-principal
+[certbot-dns-azure-conf]: https://certbot-dns-azure.readthedocs.io/en/latest/#configuration
 
 </details>
 
@@ -381,23 +418,19 @@ transip_api_key: ''
   You will need to set up a server with RFC2136 (Dynamic Update) support with a TKEY (to authenticate the updates).  How to do this will vary depending on the DNS server software in use.  For Bind9, you first need to first generate an authentication key by running
   
   ```
-  $ dnssec-keygen -a HMAC-SHA512 -b 512 -n HOST letsencrypt
-  Kletsencrypt.+165+20675
+  $ tsig-keygen -a hmac-sha512 letsencrypt
+  key "letsencrypt" {
+	  algorithm hmac-sha512;
+  	secret "G/adDW8hh7FDlZq5ZDW3JjpU/I7DzzU1PDvp26DvPQWMLg/LfM2apEOejbfdp5BXu78v/ruWbFvSK5dwYY7bIw==";
+  };
   ```
   
-  The key file (Kletsencrypt.+165+20675.key in this example) looks like the following:
-  
-  ```
-  $ cat Kletsencrypt.+165+20675.key
-  letsencrypt. IN KEY 512 3 165 Cj2SJThIYZqZO39HIOA8dYryzsLT3CI+m43m3yfGfTMvpyYw5DXjn5da hokrwyLe3MTboGkloKIsT6DUcTSdEA==
-  
-  ```
   You don't need to publish this; just copy the key data into your named.conf file:
   ```
   
   key "letsencrypt" {
     algorithm hmac-sha512;
-    secret "Cj2SJThIYZqZO39HIOA8dYryzsLT3CI+m43m3yfGfTMvpyYw5DXjn5da hokrwyLe3MTboGkloKIsT6DUcTSdEA==";
+    secret "G/adDW8hh7FDlZq5ZDW3JjpU/I7DzzU1PDvp26DvPQWMLg/LfM2apEOejbfdp5BXu78v/ruWbFvSK5dwYY7bIw==";
   };
   
   ```
@@ -431,49 +464,76 @@ transip_api_key: ''
   
 </details>
 
-### Hook Script
+<details>
+  <summary>Hook Script</summary>
 
-If your DNS provider isn't directly supported by Certbot, but has an API, you may be able to use an
-[authentication hook script](https://certbot.eff.org/docs/using.html#hooks) to update DNS automatically.
-Some DNS providers, such as [deSEC](https://github.com/desec-utils/certbot-hook) and
-[acme-dns](https://github.com/joohoi/acme-dns-certbot-joohoi), have published official Certbot hook scripts.
-For other providers, you may be able to find a community hook script, or you can write one yourself.
+  If your DNS provider isn't directly supported by Certbot, but has an API, you may be able to use an
+  [authentication hook script](https://certbot.eff.org/docs/using.html#hooks) to update DNS automatically.
+  Some DNS providers, such as [deSEC](https://github.com/desec-utils/certbot-hook) and
+  [acme-dns](https://github.com/joohoi/acme-dns-certbot-joohoi), have published official Certbot hook scripts.
+  For other providers, you may be able to find a community hook script, or you can write one yourself.
+  
+  Hook scripts are defined inline using the `hook_script_auth` and `hook_script_cleanup` options.
+  In case you want to use an external script, e.g. because your provider's hook script is quite large, you can
+  upload them to the `/share` or `/ssl` directory and use `hook_script_auth`/`hook_script_cleanup` as a wrapper
+  to call them. This way, you can also include other files along with the scripts, to properly set your API key 
+  or other credentials. Follow the instructions that came with your hook script if you're not sure.
 
-Hook scripts are defined inline using the `hook_script_auth` and `hook_script_cleanup` options.
-In case you want to use an external script, e.g. because your provider's hook script is quite large, you can
-upload them to the `/share` or `/ssl` directory and use `hook_script_auth`/`hook_script_cleanup` as a wrapper
-to call them. This way, you can also include other files along with the scripts, to properly set your API key 
-or other credentials. Follow the instructions that came with your hook script if you're not sure.
+  An example configuration:
+  
+  ```yaml
+  email: your.email@example.com
+  domains:
+    - example.com
+  certfile: fullchain.pem
+  keyfile: privkey.pem
+  challenge: dns
+  dns:
+    provider: dns-hook-script
+    hook_script_auth: |-
+      #!/bin/bash
+	  /share/path/to/your/auth-hook.sh "$@"
+    hook_script_cleanup: |-
+      #!/bin/bash
+	  /share/path/to/your/cleanup-hook.sh "$@"
+  ```
+  
+  Some hook scripts use the same script for both the auth and cleanup hooks. If this is the case for your
+  hook script, use the special value `*` for the `hook_script_cleanup`. This will make it reuse the auth script:
+  
+  ```yaml
+  dns:
+    hook_script_auth: |-
+      #!/bin/bash
+      /share/path/to/your/auth-hook.sh "$@"
+    hook_script_cleanup: "*"
+  ```
+</details>
 
-An example configuration:
+<details>
+  <summary>INWX</summary>
 
-```yaml
-email: your.email@example.com
-domains:
-  - example.com
-certfile: fullchain.pem
-keyfile: privkey.pem
-challenge: dns
-dns:
-  provider: dns-hook-script
-  hook_script_auth: |-
-    #!/bin/bash
-	/share/path/to/your/auth-hook.sh "$@"
-  hook_script_cleanup: |-
-    #!/bin/bash
-	/share/path/to/your/cleanup-hook.sh "$@"
-```
+  Use the user for the dyndns service, not the normal user.
+  The shared secret is the 2FA code, it must be the same length as the example.
+  To get this code, you must activate the 2FA or deactivate and reactivate 2FA.
+  Without 2FA leave the example key.
 
-Some hook scripts use the same script for both the auth and cleanup hooks. If this is the case for your
-hook script, use the special value `*` for the `hook_script_cleanup`. This will make it reuse the auth script:
+  Example configuration:
+  ```yaml
+  email: your.email@example.com
+  domains:
+    - your.domain.tld
+  certfile: fullchain.pem
+  keyfile: privkey.pem
+  challenge: dns
+  dns:
+    provider: dns-inwx
+    inwx_username: user
+    inwx_password: password
+    inwx_shared_secret: ABCDEFGHIJKLMNOPQRSTUVWXYZ012345
+  ```
 
-```yaml
-dns:
-  hook_script_auth: |-
-    #!/bin/bash
-	/share/path/to/your/auth-hook.sh "$@"
-  hook_script_cleanup: "*"
-```
+</details>
 
 ## Certificate files
 
@@ -485,6 +545,7 @@ You can in addition find the files via the "samba" addon within the "ssl" share.
 ## Supported DNS providers
 
 ```txt
+dns-azure
 dns-cloudflare
 dns-cloudxns
 dns-digitalocean
@@ -493,6 +554,7 @@ dns-dnsimple
 dns-dnsmadeeasy
 dns-gehirn
 dns-google
+dns-hetzner
 dns-linode
 dns-luadns
 dns-njalla
@@ -504,6 +566,7 @@ dns-sakuracloud
 dns-netcup
 dns-gandi
 dns-transip
+dns-inwx
 ```
 
 ## Support

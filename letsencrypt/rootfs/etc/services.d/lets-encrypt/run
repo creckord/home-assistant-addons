@@ -21,7 +21,7 @@ if [ "${CHALLENGE}" == "dns" ]; then
 
     PROPAGATION_SECONDS=60
     if bashio::config.exists 'dns.propagation_seconds'; then
-        PROPAGATION_SECONDS="$(bashio::config 'dns.propagation_seconds')" 
+        PROPAGATION_SECONDS="$(bashio::config 'dns.propagation_seconds')"
     fi
     bashio::log.info "Use propagation seconds: ${PROPAGATION_SECONDS}"
 else
@@ -91,6 +91,11 @@ elif [ "${DNS_PROVIDER}" == "dns-gandi" ]; then
     fi
     PROVIDER_ARGUMENTS+=("--authenticator" "certbot-plugin-gandi:dns" "--certbot-plugin-gandi:dns-credentials" /data/dnsapikey)
 
+# Hetzner
+elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-hetzner" ]; then
+    bashio::config.require 'dns.hetzner_api_token'
+    PROVIDER_ARGUMENTS+=("--authenticator" "dns-hetzner" "--dns-hetzner-credentials" /data/dnsapikey "--dns-hetzner-propagation-seconds" "${PROPAGATION_SECONDS}")
+
 # Njalla
 elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-njalla" ]; then
     bashio::config.require 'dns.njalla_token'
@@ -103,6 +108,31 @@ elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-hook-script" ]; 
 	bashio::fs.file_exists '/data/dns_hook_auth' || bashio::exit.nok 'auth hook file not found'
 	bashio::fs.file_exists '/data/dns_hook_cleanup' || bashio::exit.nok 'cleanup hook file not found'
     PROVIDER_ARGUMENTS+=("--manual" "--manual-public-ip-logging-ok" "--manual-auth-hook" "/data/dns_hook_auth" "--manual-cleanup-hook" "/data/dns_hook_auth")
+
+# rfc2136
+elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-rfc2136" ]; then
+    PROVIDER_ARGUMENTS+=("--${DNS_PROVIDER}" "--${DNS_PROVIDER}-credentials" /data/dnsapikey "--dns-rfc2136-propagation-seconds" "${PROPAGATION_SECONDS}")
+
+# Azure
+elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-azure" ]; then
+    bashio::config.require 'dns.azure_config'
+    AZURE_CREDS="$(bashio::config 'dns.azure_config')"
+
+    export AZURE_CREDS
+    if [ -f "/share/${AZURE_CREDS}" ]; then
+      cp -f "/share/${AZURE_CREDS}" "/data/azure_creds"
+      chmod 600 "/data/azure_creds"
+    else
+      bashio::log.info "Azure credentials file doesn't exist in folder share."
+    fi
+    PROVIDER_ARGUMENTS+=("--authenticator" "${DNS_PROVIDER}" "--${DNS_PROVIDER}-config" "/data/azure_creds")
+
+# INWX
+elif [ "${CHALLENGE}" == "dns" ] && [ "${DNS_PROVIDER}" == "dns-inwx" ]; then
+    bashio::config.require 'dns.inwx_username'
+    bashio::config.require 'dns.inwx_password'
+    bashio::config.require 'dns.inwx_shared_secret'
+    PROVIDER_ARGUMENTS+=("-v" "--authenticator" "${DNS_PROVIDER}" "--dns-inwx-credentials" "/data/dnsapikey" "--dns-inwx-propagation-seconds" "${PROPAGATION_SECONDS}")
 
 #All others
 else
@@ -131,12 +161,14 @@ if [ "$CHALLENGE" == "dns" ]; then
     certbot certonly --non-interactive --keep-until-expiring --expand \
         --email "$EMAIL" --agree-tos \
         --config-dir "$CERT_DIR" --work-dir "$WORK_DIR" \
-        --preferred-challenges "$CHALLENGE" "${DOMAIN_ARR[@]}" "${ACME_CUSTOM_SERVER_ARGUMENTS[@]}" "${PROVIDER_ARGUMENTS[@]}"
+        --preferred-challenges "$CHALLENGE" "${DOMAIN_ARR[@]}" "${ACME_CUSTOM_SERVER_ARGUMENTS[@]}" "${PROVIDER_ARGUMENTS[@]}" \
+        --preferred-chain "ISRG Root X1"
 else
     certbot certonly --non-interactive --keep-until-expiring --expand \
         --email "$EMAIL" --agree-tos \
         --config-dir "$CERT_DIR" --work-dir "$WORK_DIR" \
-        --preferred-challenges "$CHALLENGE" "${DOMAIN_ARR[@]}" "${ACME_CUSTOM_SERVER_ARGUMENTS[@]}" --standalone
+        --preferred-challenges "$CHALLENGE" "${DOMAIN_ARR[@]}" "${ACME_CUSTOM_SERVER_ARGUMENTS[@]}" --standalone \
+        --preferred-chain "ISRG Root X1"
 fi
 
 # Get the last modified cert directory and copy the cert and private key to store

@@ -1,4 +1,4 @@
-version: 4.12.0-cr
+version: 4.12.8-cr
 slug: letsencrypt-cr
 name: Let's Encrypt (CR)
 description: Manage certificate from Let's Encrypt (Carsten's KAS server patch)
@@ -16,25 +16,28 @@ map:
   - ssl:rw
   - share
 options:
-  certfile: fullchain.pem
-  challenge: http
-  dns: {}
   domains:
     - null
   email: null
   keyfile: privkey.pem
+  certfile: fullchain.pem
+  challenge: http
+  dns: {}
 ports:
   80/tcp: 80
-ports_description:
-  80/tcp: Only needed for http challenge
 schema:
-  acme_root_ca_cert: str?
-  acme_server: url?
+  domains:
+    - str
+  email: email
+  keyfile: str
   certfile: str
   challenge: list(dns|http)
+  acme_root_ca_cert: str?
+  acme_server: url?
   dns:
     aws_access_key_id: str?
     aws_secret_access_key: str?
+    azure_config: str?
     cloudflare_api_key: str?
     cloudflare_api_token: str?
     cloudflare_email: email?
@@ -54,6 +57,7 @@ schema:
     google_creds: str?
     hook_script_auth: str?
     hook_script_cleanup: str?
+    hetzner_api_token: str?
     linode_key: str?
     linode_version: str?
     luadns_email: email?
@@ -68,7 +72,11 @@ schema:
     ovh_consumer_key: str?
     ovh_endpoint: str?
     propagation_seconds: int(60,3600)?
-    provider: list(dns-cloudflare|dns-cloudxns|dns-digitalocean|dns-directadmin|dns-dnsimple|dns-dnsmadeeasy|dns-gehirn|dns-google|dns-hook-script|dns-linode|dns-luadns|dns-njalla|dns-nsone|dns-ovh|dns-rfc2136|dns-route53|dns-sakuracloud|dns-netcup|dns-gandi|dns-transip)?
+    provider: "list(dns-azure|dns-cloudflare|dns-cloudxns|dns-digitalocean|\
+      dns-directadmin|dns-dnsimple|dns-dnsmadeeasy|dns-gehirn|\
+      dns-google|dns-hetzner|dns-linode|dns-luadns|dns-njalla|dns-nsone|dns-ovh|\
+      dns-rfc2136|dns-route53|dns-sakuracloud|dns-netcup|dns-gandi|\
+      dns-transip|dns-inwx|dns-hook-script)?"
     rfc2136_algorithm: str?
     rfc2136_name: str?
     rfc2136_port: str?
@@ -78,8 +86,7 @@ schema:
     sakuracloud_api_token: str?
     transip_api_key: str?
     transip_username: str?
-  domains:
-    - str
-  email: email
-  keyfile: str
+    inwx_username: str?
+    inwx_password: str?
+    inwx_shared_secret: str?
 startup: once

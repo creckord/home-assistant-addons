@@ -17,6 +17,7 @@ echo -e "dns_cloudxns_api_key = $(bashio::config 'dns.cloudxns_api_key')\n" \
       "dns_dnsmadeeasy_secret_key = $(bashio::config 'dns.dnsmadeeasy_secret_key')\n" \
       "dns_gehirn_api_token = $(bashio::config 'dns.gehirn_api_token')\n" \
       "dns_gehirn_api_secret = $(bashio::config 'dns.gehirn_api_secret')\n" \
+      "dns_hetzner_api_token = $(bashio::config 'dns.hetzner_api_token')\n" \
       "dns_linode_key = $(bashio::config 'dns.linode_key')\n" \
       "dns_linode_version = $(bashio::config 'dns.linode_version')\n" \
       "dns_luadns_email = $(bashio::config 'dns.luadns_email')\n" \
@@ -41,7 +42,11 @@ echo -e "dns_cloudxns_api_key = $(bashio::config 'dns.cloudxns_api_key')\n" \
       "dns_sakuracloud_api_secret = $(bashio::config 'dns.sakuracloud_api_secret')\n" \
       "certbot_plugin_gandi:dns_api_key = $(bashio::config 'dns.gandi_api_key')\n" \
       "certbot_dns_transip:dns_transip_username = $(bashio::config 'dns.transip_username')\n" \
-      "certbot_dns_transip:dns_transip_key_file = /data/transip-rsa.key" > /data/dnsapikey
+      "certbot_dns_transip:dns_transip_key_file = /data/transip-rsa.key\n" \
+      "dns_inwx_url = https://api.domrobot.com/xmlrpc/\n" \
+      "dns_inwx_username = $(bashio::config 'dns.inwx_username')\n" \
+      "dns_inwx_password = $(bashio::config 'dns.inwx_password')\n" \
+      "dns_inwx_shared_secret = $(bashio::config 'dns.inwx_shared_secret')" > /data/dnsapikey
 
 chmod 600 /data/dnsapikey
 
